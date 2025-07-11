@@ -10,10 +10,10 @@ import json
 
 import shared_logic
 
-# --- 配置 ---
-S2_IP = "192.168.123.107"
-S2_PORT = 5002
-SERVER1_PORT = 5001
+
+S2_IP = ""
+S2_PORT = 
+SERVER1_PORT = 
 A_FILE = "lwe_matrix_A.npy"
 HINT_FILE = "hint_matrix.npy"
 QUERYABLE_ITEMS_FILE = "queryable_hashes.json"
@@ -22,7 +22,7 @@ app = Flask(__name__)
 
 
 def partition_db_by_prefix(db_hashes):
-    # ... (此函数与之前版本完全相同)
+   
     local_db_params = {}
     groups = defaultdict(list)
     for h in db_hashes:
@@ -50,20 +50,14 @@ def partition_db_by_prefix(db_hashes):
         db_matrix[i, :] = padded_row_vec
     return db_matrix, [p.hex() for p in prefix_list], local_db_params
 
-
 @app.route('/preprocess', methods=['POST'])
 def preprocess():
     try:
         data = request.json
         num_entries = data['num_entries']
         print(f"S1: 开始预处理...规模: {num_entries}")
-
-        # --- 【核心修正】开始 ---
         pregen_file_name = f"database_{num_entries}.json"
-
-        # 计时器开始
         start_time = time.time()
-
         if os.path.exists(pregen_file_name):
             print(f"S1: 发现预生成的数据文件: {pregen_file_name}，正在加载...")
             with open(pregen_file_name, 'r') as f:
@@ -72,11 +66,7 @@ def preprocess():
             print("S1: 数据文件加载完成。")
         else:
             print("S1: 未发现预生成的数据文件，将动态生成数据...")
-            # 只有在没有预生成文件时才动态生成
-            db_hashes = shared_logic.generate_hash_database(num_entries, 32)
-            # 注意：按照您的要求，动态生成的时间现在也被包含在计时内了
-
-        # --- 【核心修正】结束 ---
+            db_hashes = shared_logic.generate_hash_database(num_entries, 32)  
 
         db_hashes_hex = [h.hex() for h in db_hashes]
         with open(QUERYABLE_ITEMS_FILE, 'w') as f:
@@ -89,7 +79,7 @@ def preprocess():
 
         A = shared_logic.generate_lwe_matrix_A(shared_logic.LWE_N, db_params['num_rows'])
 
-        print("S1: 正在计算hint矩阵 (这会花费很长时间)...")
+        print("S1: 正在计算hint矩阵...")
         chunk_size = 256
         num_cols = db_matrix.shape[1]
         hint = np.zeros((A.shape[0], num_cols), dtype=np.uint32)
@@ -101,7 +91,6 @@ def preprocess():
 
         np.save(A_FILE, A)
         np.save(HINT_FILE, hint)
-
         print("S1: 正在生成OT加密列表...")
         encrypted_list = []
         for i, prefix_hex in enumerate(prefix_list):
@@ -118,7 +107,6 @@ def preprocess():
     except Exception as e:
         print(f"S1 CRASHED: {traceback.format_exc()}")
         return jsonify({"error": "S1 internal server error", "details": str(e)}), 500
-
 
 # ... (The rest of the file is unchanged) ...
 @app.route('/download/<filename>', methods=['GET'])
@@ -142,7 +130,6 @@ def download_file(filename):
         time.sleep(1);
         retries -= 1
     return "File not ready", 408
-
 
 @app.route('/ot-setup', methods=['GET'])
 def handle_ot_setup():
@@ -173,7 +160,6 @@ def compute_answer():
     except requests.exceptions.RequestException:
         return jsonify({"status": "failed to forward to s2"}), 500
     return jsonify({"status": "ans computed", "core_computation_time": core_computation_time})
-
 
 if __name__ == '__main__':
     print(f"Server1 正在 http://0.0.0.0:{SERVER1_PORT} 上运行...")
