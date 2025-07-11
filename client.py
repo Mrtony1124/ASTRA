@@ -9,20 +9,17 @@ import random
 import hashlib
 import os
 import json
-
 import shared_logic
 
-# --- 配置 ---
-S1_IP = "192.168.123.102"
-S2_IP = "192.168.123.107"
-S1_PORT = 5001;
-S2_PORT = 5002
+S1_IP = ""
+S2_IP = ""
+S1_PORT = ;
+S2_PORT =
 S1_URL = f"http://{S1_IP}:{S1_PORT}"
 S2_URL = f"http://{S2_IP}:{S2_PORT}"
 
-# 更新为您需要测试的超大规模数据
 DATABASE_SIZES = [10 ** 7]
-HASH_LEN_BYTES = 32
+HASH_LEN_BYTES = 
 A_FILE = "lwe_matrix_A.npy"
 BF_FILE_NAME_TEMPLATE = "bf_{}.bin"
 QUERYABLE_ITEMS_FILE = "queryable_hashes.json"
@@ -30,9 +27,8 @@ QUERYABLE_ITEMS_FILE = "queryable_hashes.json"
 DB_PARAMS = {}
 QUERYABLE_HASHES = []
 
-
 def run_single_query():
-    # ... (此函数与之前版本完全相同)
+
     global DB_PARAMS, QUERYABLE_HASHES
     LWE_A = np.load(A_FILE)
     target_hash_hex = random.choice(QUERYABLE_HASHES)
@@ -53,7 +49,7 @@ def run_single_query():
                          shared_logic.decrypt_index(my_key, token) is not None), None)
     if target_row_b is None: return None, "OT failed: Query item's prefix not found."
     metrics['time_ot'] = time.time() - start_time_ot
-    print(f"OT成功, 找到行索引: {target_row_b}, 耗时: {metrics['time_ot']:.4f}s")
+    print(f"OT成功, 找到行索引: {target_row_b}")
     start_time_qgen = time.time()
     s = np.random.randint(0, shared_logic.LWE_Q, size=shared_logic.LWE_N, dtype=np.uint32)
     e = shared_logic.generate_noise_vector(DB_PARAMS['num_rows'])
@@ -110,7 +106,6 @@ def run_single_query():
         resp_s2_eval.text) + metrics.get('comm_bf_bytes', 0)
     return metrics, None
 
-
 def run_experiment():
     global DB_PARAMS, QUERYABLE_HASHES
     results = []
@@ -120,39 +115,39 @@ def run_experiment():
         print(f"开始为规模 {size} 进行全自动设置...")
 
         try:
-            # --- 【核心修正】移除预处理请求的超时限制 ---
-            print(f"向Server1发送预处理请求 (规模: {size})，这可能需要数小时，请耐心等待...")
+           
+            print(f"向Server1发送预处理请求")
             resp_s1_prep = requests.post(f"{S1_URL}/preprocess", json={'num_entries': size}, timeout=None)
-            # --- 【修正结束】---
+         
 
             resp_s1_prep.raise_for_status()
             DB_PARAMS = resp_s1_prep.json()['db_params']
             DB_PARAMS['num_entries'] = size
             s1_preprocess_time = resp_s1_prep.json()['time']
-            print(f"S1预处理完成, 耗时: {s1_preprocess_time / 3600:.2f} 小时")  # 改为以小时为单位
+            print(f"S1预处理完成") 
 
-            # ... 后续流程与之前相同 ...
+        
             print("客户端正在下载可查询项列表...")
             resp_items = requests.get(f"{S1_URL}/download/query_items", timeout=300)
             resp_items.raise_for_status()
             QUERYABLE_HASHES = resp_items.json()
-            print(f"客户端下载可查询项列表完成, 共 {len(QUERYABLE_HASHES)} 项。")
+            print(f"客户端下载可查询项列表完成, ")
 
             print("客户端正在下载 A 矩阵...")
             start_time = time.time()
-            with requests.get(f"{S1_URL}/download/A", stream=True, timeout=600) as r:  # 增加下载超时
+            with requests.get(f"{S1_URL}/download/A", stream=True, timeout=600) as r: 
                 r.raise_for_status()
                 open(A_FILE, 'wb').write(r.content)
             time_client_setup = time.time() - start_time
             comm_client_setup_bytes = os.path.getsize(A_FILE)
-            print(f"客户端下载 A 矩阵完成, 耗时: {time_client_setup:.2f}s")
+            print(f"客户端下载 A 矩阵完成")
 
             print("正在触发Server2进行设置...")
             resp_s2_setup = requests.post(f"{S2_URL}/setup", json={})
             resp_s2_setup.raise_for_status()
             time_s2_setup = resp_s2_setup.json()['time']
             comm_s2_setup_bytes = resp_s2_setup.json()['size_bytes']
-            print(f"Server2设置完成, 耗时: {time_s2_setup:.2f}s")
+            print(f"Server2设置完成")
 
         except requests.exceptions.RequestException as e:
             print(f"预处理或设置失败: {e}")
@@ -165,7 +160,7 @@ def run_experiment():
             if metrics:
                 query_metrics_list.append(metrics)
             else:
-                print(f"查询失败: {error_msg}")
+                print(f"查询失败")
                 break
             time.sleep(1)
 
@@ -187,7 +182,7 @@ def run_experiment():
     if results:
         df = pd.DataFrame(results)
         df.to_csv('experiment_results_large_scale.csv', index=False)
-        print("\n\n实验完成！结果已保存到 'experiment_results_large_scale.csv'")
+        print("\n\n实验完成！")
         print(df)
 
 
