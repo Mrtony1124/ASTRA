@@ -11,7 +11,7 @@ def create_large_dataset():
 
     print("=" * 50)
     print(f"开始生成一个包含 {NUM_ENTRIES:,} 条记录的数据文件...")
-    print(f"这将需要一些时间，并会创建一个较大的文件 ({NUM_ENTRIES * HASH_LEN_BYTES / 1e9:.2f} GB)。")
+    print(f"创建一个文件 ({NUM_ENTRIES * HASH_LEN_BYTES / 1e9:.2f} GB)。")
     start_time = time.time()
 
     db_hashes = shared_logic.generate_hash_database(NUM_ENTRIES, HASH_LEN_BYTES)
