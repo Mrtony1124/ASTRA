@@ -10,7 +10,7 @@ import json
 
 import shared_logic
 
-# --- 配置 ---
+
 S1_IP = "192.168.1.101"
 S1_PORT = 5001
 SERVER2_PORT = 5002
@@ -22,7 +22,7 @@ app = Flask(__name__)
 TRANSACTION_STORE = {}
 SK_OPRF = random.randint(2, shared_logic.OPRF_GROUP_ORDER - 1)
 
-# setup, receive_s, receive_ans, setup_verification, download_bf 接口均与上一版相同
+# setup, receive_s, receive_ans, setup_verification, download_bf 
 @app.route('/setup', methods=['POST'])
 def setup_server2():
     s1_url = f"http://{S1_IP}:{S1_PORT}"; print("S2: 正在从Server1下载hint矩阵...")
@@ -34,7 +34,7 @@ def setup_server2():
                 for chunk in r.iter_content(chunk_size=8192): f.write(chunk)
         hint_size_bytes = os.path.getsize(HINT_FILE); app.config['HINT_MATRIX'] = np.load(HINT_FILE)
         setup_time = time.time() - start_time
-        print(f"S2: Hint矩阵下载并加载完成。耗时: {setup_time:.4f}s")
+        print(f"S2: Hint矩阵下载并加载完成")
         return jsonify({"status": "s2 setup complete", "time": setup_time, "size_bytes": hint_size_bytes})
     except Exception as e: print(f"S2: 设置失败 - {e}"); return jsonify({"error": str(e)}), 500
 
@@ -113,11 +113,7 @@ def oprf_interactive_eval():
         "bloom_gen_time": TRANSACTION_STORE[transaction_id].get('bloom_gen_time', 0),
         "oprf_eval_time": time.time() - start_time,
     }
-    # --- 【核心修正】---
-    # 在调试期间，我们不删除事务记录，以确保客户端可以获取调试信息
-    # if transaction_id in TRANSACTION_STORE:
-    #     del TRANSACTION_STORE[transaction_id]
-    # --- 【修正结束】---
+
     return jsonify({"status": "oprf evaluation complete", "evaluated_element": evaluated_element, "s2_metrics": s2_metrics})
 
 if __name__ == '__main__':
